@@ -31,6 +31,8 @@ classdef SVOREX < Algorithm
     properties
         description = 'Support Vector for Ordinal Regression (Explicit constraints)';        
         parameters = struct('C', 0.1, 'k', 0.1);
+        % scholet 11fev2019
+        kernel = 'rbf';
     end
     properties (Access = private)
         algorithmMexPath = fullfile(fileparts(which('Algorithm.m')),'SVOREX');
@@ -50,12 +52,26 @@ classdef SVOREX < Algorithm
             if isempty(strfind(path,obj.algorithmMexPath))
                 addpath(obj.algorithmMexPath);
             end
-            [alpha, thresholds, projectedTrain] = svorex([train.patterns train.targets],parameters.k,parameters.C,0,0,0);
+            
+            
+            % scholet 11fev2019. Si le kernel voulu est "linéaire", on
+            % passe le flag à 1. Ce dernier sera passé à la fonction
+            % mainSvorex.
+            if strcmp(obj.kernel, 'linear')
+                linearKernel = 1;
+            else
+                linearKernel = 0;
+            end
+            mexOutputs = 0;
+            normalizePatterns = 0;
+            [alpha, thresholds, projectedTrain] = svorex([train.patterns train.targets],parameters.k,parameters.C,normalizePatterns,mexOutputs,linearKernel);
+            %[alpha, thresholds, projectedTrain] = svorex([train.patterns train.targets],parameters.k,parameters.C,normalizePatterns,mexOutputs,linearKernel);
             predictedTrain = obj.assignLabels(projectedTrain, thresholds);
             model.projection = alpha;
             model.thresholds = thresholds;
             model.parameters = parameters;
-            model.train = train.patterns;
+            %model.train = train.patterns;
+            model.kernel = obj.kernel;
             obj.model = model;
             projectedTrain = projectedTrain';
             if ~isempty(strfind(path,obj.algorithmMexPath))
@@ -63,9 +79,17 @@ classdef SVOREX < Algorithm
             end
         end
         
-        function [projected, predicted] = privpredict(obj, test)
+         function [projected, predicted] = privpredict(obj, test)
             %PREDICT predicts labels of TEST patterns labels. The object needs to be fitted to the data first.
             kernelMatrix = computeKernelMatrix(obj.model.train',test','rbf',obj.model.parameters.k);
+            projected = obj.model.projection*kernelMatrix;
+            
+            predicted = SVOREX.assignLabels(projected, obj.model.thresholds);
+            projected = projected';
+        end
+        
+        function [projected, predicted] = directFit(obj, testpatterns, trainpatterns)
+            kernelMatrix = computeKernelMatrix(trainpatterns', testpatterns', obj.model.kernel, obj.model.parameters.k);
             projected = obj.model.projection*kernelMatrix;
             
             predicted = SVOREX.assignLabels(projected, obj.model.thresholds);
