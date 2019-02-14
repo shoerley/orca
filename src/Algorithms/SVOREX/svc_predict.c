@@ -142,6 +142,7 @@ BOOL svm_predict ( Data_List * testlist, smo_Settings * settings )
 		settings->testrate = 0 ;
 		settings->testerror = 0 ;
 	}	
+
 	return TRUE ;
 }
 

@@ -10,6 +10,7 @@
 #include "smo.h"
 
 #include "mex.h"
+#include "matrix.h"
 
 #define VERSION (0)
 
@@ -20,13 +21,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
    clock_t start;
    double trainTime=0;
-   /*TEST REMOVED */
-   /* double testTime=0; */
 
-   /*TEST REMOVED if(nrhs != 7)
-	{
-        mexErrMsgTxt("Error. 7 parámetros requeridos => Train , Test , Ko , Co, Normalizar(1: SI, 0:NO), Salidas MexPrintf(1:SI, 0: NO), Kernel Polinómico(1: SI, 0:NO)");
-	}*/
 
 	if(nrhs != 6)
 	{
@@ -70,11 +65,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             n = mxGetN(prhs[i]);/*numero columnas*/
         				
             /*Reservo la matriz dinamica MatBien*/  
-            matBien=(double **)calloc(m,sizeof(double *));
+            /*matBien=(double **)calloc(m,sizeof(double *));*/
+            /*scholet*/
+            matBien = mxCalloc(m, sizeof(double *));
 	
             for(aux=0; aux<m; aux++)
             {
-                matBien[aux]=(double *)calloc(n,sizeof(double));
+            	/*scholet*/
+            	matBien[aux] = mxCalloc(n, sizeof(double));
+                /*matBien[aux]=(double *)calloc(n,sizeof(double));*/
             }
              		
            	/* Retrieve the input data */
@@ -101,11 +100,15 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
 
                 /*Reservo la matriz dinamica MatTrain*/  
-                matTrain=(double **)calloc(m,sizeof(double *));
+                /*scholet*/
+                matTrain = mxCalloc(m, sizeof(double *));
+                /*matTrain=(double **)calloc(m,sizeof(double *));*/
 	
                 for(aux=0; aux<m; aux++)
                 {
-                    matTrain[aux]=(double *)calloc(n,sizeof(double));
+                	/*scholet*/
+                	matTrain[aux] = mxCalloc(n, sizeof(double));
+                    /*matTrain[aux]=(double *)calloc(n,sizeof(double));*/
                 } 
                 
             
@@ -119,37 +122,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
                         /*mexPrintf ("matTrain[%d][%d]=%lf\n",aux,aux2,matTrain[aux][aux2]);*/
                     }
                 }
-            
             }
-            
-            /*TEST REMOVED if(i==1)*parametro uno: Matriz test
-            {
-
-				nFil2=m;
-				nCol2=n;
-              
-                *Reservo la matriz dinamica MatTest
-                matTest=(double **)calloc(m,sizeof(double *));
-	
-                for(aux=0; aux<m; aux++)
-                {
-                    matTest[aux]=(double *)calloc(n,sizeof(double));
-                } 
-                
-            
-                *Asignacion test y comprobacion
-                
-                for(aux=0; aux<m; aux++)
-                {
-                    for(aux2=0; aux2<n; aux2++)			
-                    {
-                        matTest[aux][aux2]=matBien[aux][aux2];
-                        *mexPrintf ("matTest[%d][%d]=%lf\n",aux,aux2,matTest[aux][aux2]);
-                    }
-                }
-            
-            }   */
-              
         }
         
         
@@ -195,10 +168,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 	/* TEST REMOVED Hack*/
 	nFil2=2;
 	nCol2=nCol;
-     matTest=(double **)calloc(nFil2,sizeof(double *));
-	for(aux=0; aux<nFil2; aux++)
-        matTest[aux]=(double *)calloc(nCol2,sizeof(double));
-     for(aux=0; aux<nFil2; aux++)
+	/*scholet*/
+	matTest = mxCalloc(nFil2, sizeof(double *));
+    /*matTest=(double **)calloc(nFil2,sizeof(double *));*/
+
+	for(aux=0; aux<nFil2; aux++){
+		/*scholet*/
+		matTest[aux] = mxCalloc(nCol2, sizeof(double));
+        /*matTest[aux]=(double *)calloc(nCol2,sizeof(double));*/
+	}
+    
+    for(aux=0; aux<nFil2; aux++)
         for(aux2=0; aux2<nCol2; aux2++)
            matTest[aux][aux2]=matTrain[aux][aux2];
 	/* End Hack*/
@@ -316,126 +296,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			else
 				mexPrintf ("\r\nTEST ERROR %f and SVs %.0f at C+=%f, C-=%f and Kappa=%f with %.3f seconds.\n", smosetting->testerror, smosetting->svs, smosetting->vc_p, smosetting->vc_n, smosetting->kappa, smosetting->smo_timing) ;
 		}
-/**************************************************************************************/
-			/*if (NULL != (log = fopen ("kfoldsvc.log", "a+t")) ) 
-			{
-				if (REGRESSION == smosetting->pairs->datatype){
-					fprintf(log,"%d-fold: TEST ASE %f, AAE %f and SVs %.0f at C=%f and Kappa=%f with %.3f seconds.\n", defsetting->kfold, smosetting->testrate, smosetting->testerror, smosetting->svs, smosetting->vc, smosetting->kappa, smosetting->smo_timing) ;
-					mexPrintf("%d-fold: TEST ASE %f, AAE %f and SVs %.0f at C=%f and Kappa=%f with %.3f seconds.\n", defsetting->kfold, smosetting->testrate, smosetting->testerror, smosetting->svs, smosetting->vc, smosetting->kappa, smosetting->smo_timing) ;
-}
-				else if (ORDINAL == smosetting->pairs->datatype){
-					fprintf (log,"TEST ERROR NUMBER %.0f, AAE %.0f and SVs %.0f, at C=%.3f Kappa=%.3f with %.3f seconds.\n", 
-					smosetting->testerror*defsetting->testdata.count,smosetting->testrate*defsetting->testdata.count, smosetting->svs, smosetting->vc, smosetting->kappa, smosetting->smo_timing) ;
-					mexPrintf ("TEST ERROR NUMBER %.0f, AAE %.0f and SVs %.0f, at C=%.3f Kappa=%.3f with %.3f seconds.\n", 
-					smosetting->testerror*defsetting->testdata.count,smosetting->testrate*defsetting->testdata.count, smosetting->svs, smosetting->vc, smosetting->kappa, smosetting->smo_timing) ;
 
-}
-				else{
-					fprintf(log,"%d-fold: TEST ERROR %f and SVs %.0f at C=%f, C+=%f, C-=%f and Kappa=%f with %.3f seconds.\n", defsetting->kfold, smosetting->testerror, smosetting->svs, smosetting->vc, smosetting->vc_p, smosetting->vc_n, smosetting->kappa, smosetting->smo_timing) ;		
-				fclose(log) ;
-					mexPrintf("%d-fold: TEST ERROR %f and SVs %.0f at C=%f, C+=%f, C-=%f and Kappa=%f with %.3f seconds.\n", defsetting->kfold, smosetting->testerror, smosetting->svs, smosetting->vc, smosetting->vc_p, smosetting->vc_n, smosetting->kappa, smosetting->smo_timing) ;		
-				
-}
-			}*/
-
-
-			/* write another log*/				
-			/*if (REGRESSION == smosetting->pairs->datatype)
-			{
-				if (NULL != (log = fopen ("esvr.log", "a+t")) )
-				{
-					fprintf(log,"%f %f %f\n", smosetting->testerror, smosetting->testrate, defsetting->time) ;
-					fclose(log) ;			
-				}
-			}*/
-/*****************************************************************/
-			/*else if (ORDINAL == smosetting->pairs->datatype)
-			{
-				if (NULL != (log = fopen ("ordinal_explicit.log", "a+t")) )
-				{
-					fprintf(log,"%.0f %.0f %f %f\n", smosetting->testerror*defsetting->testdata.count, smosetting->testrate*defsetting->testdata.count, smosetting->testrate, smosetting->smo_timing) ;
-					fclose(log) ;                   
-				}
-			}*/
-/*****************************************************************/
 		}
 		Clear_smo_Settings( smosetting ) ;
 	
 	/* free memory then exit */
 	Clear_def_Settings( defsetting ) ;
 
-	/*Devolución de valores*/
+	/* ajout scholet*/
+	/*
+	for(i = 0; i < 0; i++){
+		free(matBien[i]);
+		free(matTrain[i]);
+	}
 
-	/*TEST REMOVED for(i=0;i<6;i++)
-	{
-
-		if(i==0)
-		{
-			* Create an mxArray for the output data *
-   		plhs[i] = mxCreateDoubleMatrix(1, e1.dim2, mxREAL);
-	
-			* Create a pointer to the output data*
-   		data6 = mxGetPr(plhs[i]);
-
-			for(j=0; j< e1.dim2; j++)
-			{
-				data6[j] = e1.data2[j];	
-			}
-		}
-	
-		if(i==1)
-		{
-			* Create an mxArray for the output data *
-   		plhs[i] = mxCreateDoubleMatrix(1, e1.dim3, mxREAL);
-	
-			* Create a pointer to the output data* 
-   		data6 = mxGetPr(plhs[i]);
-
-			for(j=0; j< e1.dim3; j++)
-			{
-				data6[j] = e1.data3[j];	
-			}
-		}
-	
-		if(i==2)
-		{
-			* Create an mxArray for the output data *
-   		plhs[i] = mxCreateDoubleMatrix(1, e1.dim4, mxREAL);
-	
-			* Create a pointer to the output data*
-   		data6 = mxGetPr(plhs[i]);
-
-			for(j=0; j< e1.dim4; j++)
-			{
-				data6[j] = e1.data4[j];	
-			}
-		}
-
-		if(i==3)
-		{
-			* Create an mxArray for the output data *
-   		plhs[i] = mxCreateDoubleMatrix(1, e1.dim5, mxREAL);
-	
-			* Create a pointer to the output data*
-   		data6 = mxGetPr(plhs[i]);
-
-			for(j=0; j< e1.dim5; j++)
-			{
-				data6[j] = e1.data5[j];	
-			}
-		}
-		if(i==4)
-		{
-			plhs[i] = mxCreateDoubleScalar(trainTime);
-
-		}
-		if(i==5)
-		{
-			plhs[i] = mxCreateDoubleScalar(testTime);
-
-		}
-
-	}*/
+	for(i = 0; i < nFil2; i++){
+		free(matTest[i]);
+	}
+	*/
+	/*
+	free(matBien);
+	free(matTrain);
+	free(matTest);
+	*/
+    /**/
 	for(i=0;i<4;i++)
 	{
 	
@@ -451,6 +335,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 			{
 				data6[j] = e1.data3[j];	
 			}
+
 		}
 	
 		if(i==1)
@@ -487,6 +372,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 		}
 
 	}
+    
+    /* ajout scholet*/
+    /*free(data1);*/
+    /*free(data6);*/
+    
+    free(e1.data2);
+    free(e1.data3);
+    free(e1.data4);
+    free(e1.data5);
+    /* ajout scholet */
 
 	/*return 0;*/
 }

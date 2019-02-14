@@ -375,7 +375,7 @@ typedef struct _kcv_Settings
 #define DEF_BETA         (0) 
 #define DEF_VC           (1.0)
 #define DEF_KAPPA        (1.0) 
-#define DEF_P            (1) 
+#define DEF_P            (1)  
 #define DEF_KERNEL       (GAUSSIAN)
 #define DEF_METHOD       (SMO_SKTWO) 
 #define DEF_DISPLAY      (FALSE)
